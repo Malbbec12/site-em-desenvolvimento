@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loja - Ordem de Serviço</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background-color: #000;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 40px;
+    }
+    .container {
+      background-color: #111;
+      padding: 20px;
+      border-radius: 15px;
+      width: 400px;
+      box-shadow: 0 0 10px #00ff00;
+      border: 2px solid #00ff00;
+      opacity: 0;
+      transform: translateY(50px);
+      animation: fadeInUp 1s ease-out forwards;
+    }
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    h2 {
+      color: #00ffcc;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      background-color: #222;
+      color: #fff;
+    }
+    button {
+      margin-top: 15px;
+      width: 100%;
+      padding: 10px;
+      background-color: #00ffcc;
+      border: none;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #00e6b8;
+    }
+    .output {
+      margin-top: 15px;
+      background-color: #222;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .botao-contato-cliente {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .botao-contato-cliente a {
+      display: inline-block;
+      padding: 12px 25px;
+      background: linear-gradient(145deg, #00ffaa, #00cc99);
+      color: #000;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 255, 170, 0.5);
+      transition: transform 0.2s ease;
+    }
+    .botao-contato-cliente a:hover {
+      transform: scale(1.05);
+    }
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #00ffcc;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 2s linear infinite;
+      margin: 10px auto;
+      display: none;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .status-tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 5px;
+    }
+    .status-orcamento { background-color: #ffcc00; color: #000; }
+    .status-aprovado { background-color: #00cc66; color: #000; }
+    .status-bancada { background-color: #3399ff; color: #000; }
+    .status-pronto { background-color: #00ff00; color: #000; }
+    .status-comparecer { background-color: #ff3366; color: #fff; }
+    #ordemList {
+      width: 100%;
+      margin-top: 20px;
+    }
+    .ordem-item {
+      background-color: #222;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .ordem-item:hover {
+      background-color: #333;
+    }
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      color: #fff;
+      display: none;
+      z-index: 1000;
+      animation: fadeIn 0.5s;
+    }
+    .notification.success {
+      background-color: #00cc66;
+    }
+    .notification.error {
+      background-color: #ff3366;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .history-item {
+      font-size: 12px;
+      color: #ccc;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="notification" class="notification"></div>
+
+  <!-- Tela do Cliente -->
+  <div class="container">
+    <h2>Cliente - Acompanhar Ordem</h2>
+    <label for="consultaOrdem">Digite a Ordem de Serviço:</label>
+    <input type="text" id="consultaOrdem" placeholder="Ex: 1234" />
+    <button onclick="consultarOrdem()">Consultar</button>
+    <div class="loader" id="loaderConsulta"></div>
+
+    <div class="output" id="resultadoConsulta"></div>
+
+    <div class="botao-contato-cliente">
+      <a href="https://wa.me/5513982329425" target="_blank">Contato</a>
+    </div>
+  </div>
+
+  <!-- Tela do Lojista -->
+  <div class="container" id="lojista">
+    <h2>Loja - Painel do Lojista</h2>
+    <label for="senha">Senha do Lojista:</label>
+    <input type="password" id="senha" placeholder="Digite a senha" />
+
+    <div id="formularioLojista" style="display: none;">
+      <label for="ordem">Ordem de Serviço:</label>
+      <input type="text" id="ordem" />
+
+      <label for="nome">Nome do Cliente:</label>
+      <input type="text" id="nome" />
+
+      <label for="modelo">Marca/Modelo:</label>
+      <input type="text" id="modelo" />
+
+      <label for="servico">Serviço:</label>
+      <textarea id="servico"></textarea>
+
+      <label for="status">Status:</label>
+      <select id="status">
+        <option value="Orçamento em andamento">Orçamento em andamento</option>
+        <option value="Orçamento aprovado">Orçamento aprovado</option>
+        <option value="Celular já na bancada">Celular já na bancada</option>
+        <option value="Celular está pronto">Celular está pronto</option>
+        <option value="Comparecer na loja">Comparecer na loja</option>
+      </select>
+
+      <button onclick="salvarDados()">Salvar</button>
+      <button onclick="limparFormulario()">Novo</button>
+      <div class="loader" id="loaderSalvar"></div>
+      
+      <h3>Ordens Recentes</h3>
+      <div id="ordemList"></div>
+    </div>
+  </div>
+
+  <script>
+    // Show notification
+    function showNotification(message, type) {
+      const notification = document.getElementById('notification');
+      notification.textContent = message;
+      notification.className = `notification ${type}`;
+      notification.style.display = 'block';
+      
+      setTimeout(() => {
+        notification.style.display = 'none';
+      }, 3000);
+    }
+    
+    // Format date and time
+    function formatDateTime(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleString('pt-BR');
+    }
+    
+    // Get status tag HTML
+    function getStatusTag(status) {
+      let className = '';
+      
+      if (status.includes('Orçamento em andamento')) {
+        className = 'status-orcamento';
+      } else if (status.includes('Orçamento aprovado')) {
+        className = 'status-aprovado';
+      } else if (status.includes('bancada')) {
+        className = 'status-bancada';
+      } else if (status.includes('pronto')) {
+        className = 'status-pronto';
+      } else if (status.includes('Comparecer')) {
+        className = 'status-comparecer';
+      }
+      
+      return `<span class="status-tag ${className}">${status}</span>`;
+    }
+    
+    // Clear the form
+    function limparFormulario() {
+      document.getElementById('ordem').value = '';
+      document.getElementById('nome').value = '';
+      document.getElementById('modelo').value = '';
+      document.getElementById('servico').value = '';
+      document.getElementById('status').value = 'Orçamento em andamento';
+    }
+    
+    // Save data to server
+    async function salvarDados() {
+      const ordem = document.getElementById('ordem').value;
+      const nome = document.getElementById('nome').value;
+      const modelo = document.getElementById('modelo').value;
+      const servico = document.getElementById('servico').value;
+      const status = document.getElementById('status').value;
+      
+      // Validate fields
+      if (!ordem || !nome || !modelo || !servico) {
+        showNotification('Todos os campos são obrigatórios', 'error');
+        return;
+      }
+      
+      // Show loader
+      document.getElementById('loaderSalvar').style.display = 'block';
+      
+      try {
+        const response = await fetch('save_order.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            order_id: ordem,
+            client_name: nome,
+            device_model: modelo,
+            service_description: servico,
+            status: status
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showNotification('Ordem de serviço salva com sucesso!', 'success');
+          carregarOrdens(); // Refresh order list
+        } else {
+          showNotification('Erro ao salvar: ' + result.message, 'error');
+        }
+      } catch (error) {
+        showNotification('Erro de conexão: ' + error.message, 'error');
+      } finally {
+        document.getElementById('loaderSalvar').style.display = 'none';
+      }
+    }
+    
+    // Consult order status
+    async function consultarOrdem() {
+      const ordem = document.getElementById('consultaOrdem').value;
+      const resultado = document.getElementById('resultadoConsulta');
+      
+      if (!ordem) {
+        resultado.innerHTML = "Por favor, digite o número da ordem de serviço.";
+        return;
+      }
+      
+      // Show loader
+      document.getElementById('loaderConsulta').style.display = 'block';
+      resultado.innerHTML = '';
+      
+      try {
+        const response = await fetch(`get_order.php?order_id=${encodeURIComponent(ordem)}`);
+        const result = await response.json();
+        
+        if (result.success) {
+          const data = result.data;
+          
+          // Format result
+          let html = `
+            <strong>Nome:</strong> ${data.client_name}<br>
+            <strong>Marca/Modelo:</strong> ${data.device_model}<br>
+            <strong>Serviço:</strong> ${data.service_description}<br>
+            <strong>Status:</strong> ${data.status} ${getStatusTag(data.status)}<br>
+            <strong>Última atualização:</strong> ${formatDateTime(data.updated_at)}<br>
+          `;
+          
+          // Add history if available
+          if (data.history && data.history.length > 0) {
+            html += '<br><strong>Histórico:</strong><br>';
+            data.history.forEach(item => {
+              html += `<div class="history-item">
+                ${formatDateTime(item.changed_at)} - ${item.status}
+              </div>`;
+            });
+          }
+          
+          resultado.innerHTML = html;
+        } else {
+          resultado.innerHTML = result.message;
+        }
+      } catch (error) {
+        resultado.innerHTML = 'Erro de conexão. Tente novamente.';
+      } finally {
+        document.getElementById('loaderConsulta').style.display = 'none';
+      }
+    }
+    
+    // Load order list for shop owner
+    async function carregarOrdens() {
+      const ordemList = document.getElementById('ordemList');
+      
+      try {
+        const response = await fetch('get_order.php?list=all');
+        const result = await response.json();
+        
+        if (result.success) {
+          const orders = result.data;
+          
+          if (orders.length === 0) {
+            ordemList.innerHTML = '<p>Nenhuma ordem de serviço encontrada.</p>';
+            return;
+          }
+          
+          let html = '';
+          orders.forEach(order => {
+            html += `
+              <div class="ordem-item" onclick="carregarOrdem('${order.order_id}')">
+                <div>
+                  <strong>${order.order_id}</strong> - ${order.client_name}
+                  <div>${order.device_model}</div>
+                </div>
+                <div>
+                  ${getStatusTag(order.status)}
+                </div>
+              </div>
+            `;
+          });
+          
+          ordemList.innerHTML = html;
+        } else {
+          ordemList.innerHTML = '<p>Erro ao carregar ordens: ' + result.message + '</p>';
+        }
+      } catch (error) {
+        ordemList.innerHTML = '<p>Erro de conexão ao carregar ordens.</p>';
+      }
+    }
+    
+    // Load single order into form
+    async function carregarOrdem(orderId) {
+      try {
+        const response = await fetch(`get_order.php?order_id=${encodeURIComponent(orderId)}`);
+        const result = await response.json();
+        
+        if (result.success) {
+          const data = result.data;
+          
+          // Fill form fields
+          document.getElementById('ordem').value = data.order_id;
+          document.getElementById('nome').value = data.client_name;
+          document.getElementById('modelo').value = data.device_model;
+          document.getElementById('servico').value = data.service_description;
+          document.getElementById('status').value = data.status;
+          
+          showNotification('Ordem carregada com sucesso!', 'success');
+        } else {
+          showNotification('Erro ao carregar ordem: ' + result.message, 'error');
+        }
+      } catch (error) {
+        showNotification('Erro de conexão: ' + error.message, 'error');
+      }
+    }
+    
+    // Handle shop owner login
+    document.getElementById('senha').addEventListener('input', function() {
+      if (this.value === '1234') {
+        document.getElementById('formularioLojista').style.display = 'block';
+        carregarOrdens(); // Load orders when shop owner logs in
+      } else {
+        document.getElementById('formularioLojista').style.display = 'none';
+      }
+    });
+    
+    // Enter key triggers consultation
+    document.getElementById('consultaOrdem').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        consultarOrdem();
+      }
+    });
+  </script>
+
+</body>
+</html>
